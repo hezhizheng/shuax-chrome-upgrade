@@ -3,3 +3,4 @@
 /logs
 *.exe
 *.exe~
+!7z.exe
