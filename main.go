@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"log"
+	"os"
 	"shuax-chrome-auto-update/service"
-	"time"
 )
 
 // 1、爬取 https://assets.shuax.com/ 的页面 获取最新版的chrome版本
@@ -27,51 +27,87 @@ var _config Config
 
 func init() {
 	initConfig()
-	initLog()
 }
 
 func main() {
 	configStr := viper.Get(`app`)
 	jsonStr, e := json.Marshal(configStr)
 	if e != nil {
-		log.Error("json Marshal error  ", e)
+		log.Fatal("json Marshal error  ", e)
 	}
 	json.Unmarshal(jsonStr, &_config)
 
+	fmt.Printf("欢迎使用shuax_chrome_update工具\n")
+	fmt.Printf("当前定义的本地chrome的安装路径为：" + _config.LocalChromePath + "\n")
+	fmt.Printf("请根据提示输入相关指令进行操作\n")
+	fmt.Printf("是否检查更新？1：是 2：否\n")
 
+	input := bufio.NewScanner(os.Stdin)
 
+	for input.Scan() {
+		line := input.Text()
+
+		fmt.Printf("输入了：" + line + "\n")
+
+		if line == "1" {
+
+			f := &service.FileInfo{
+				FileDir: _config.LocalChromePath + "\\App\\",
+			}
+			localVersionName := service.GetLocalVersionName(f)
+
+			chromeFileName, latestVersionName := service.GetLatestVersionName(_config.AutoDownload)
+
+			if service.CompareVersion(latestVersionName, localVersionName) == 1 {
+				fmt.Printf("当前本地chrome的版本为：" + localVersionName + "，" + "最新chrome版本为：" + latestVersionName + " 是否进行升级？1：是 2：否\n")
+			} else {
+				fmt.Printf("当前本地chrome的版本为：" + localVersionName + "，" + "最新chrome版本为：" + latestVersionName + " 无需升级\n")
+				break
+			}
+			var (
+				isUpdate string
+				isDelete string
+			)
+			fmt.Scanln(&isUpdate)
+			fmt.Printf("输入了：" + isUpdate + "\n")
+
+			if isUpdate != "1" {
+				break
+			}
+			fmt.Printf("升级中，请等待，此过程中请不要做任何输入。\n")
+			service.DownloadChrome(latestVersionName, localVersionName, chromeFileName)
+
+			fmt.Printf("升级成功，是否删除下载/解压的文件？（建议先检查是否升级成功在执行此操作！！！）1：是 2：否\n")
+			fmt.Scanln(&isDelete)
+			fmt.Printf("输入了：" + isDelete + "\n")
+			if isDelete != "1" {
+				break
+			}
+			fmt.Printf("文件删除中......\n")
+			break
+
+		} else {
+			break
+		}
+
+		// 输入bye时 结束
+		if line == "exit" {
+			break
+		}
+	}
+
+	return
 	f := &service.FileInfo{
 		FileDir: _config.LocalChromePath + "\\App\\",
 	}
 	localVersionName := service.GetLocalVersionName(f)
 
-	chromeFileName,latestVersionName := service.GetLatestVersionName(_config.AutoDownload)
+	chromeFileName, latestVersionName := service.GetLatestVersionName(_config.AutoDownload)
 
-	fmt.Println("1111111",chromeFileName, latestVersionName, localVersionName)
+	fmt.Println("1111111", chromeFileName, latestVersionName, localVersionName)
 
-	service.DownloadChrome("87.0.4280.89",localVersionName,chromeFileName)
+	service.DownloadChrome(latestVersionName, localVersionName, chromeFileName)
 
-	tickerRun()
-
-	for {
-	}
-}
-
-func tickerRun() {
-
-	ticker := time.NewTicker(time.Minute * 1)
-
-	i := 0
-	go func() {
-		for { //循环
-			<-ticker.C
-			i++
-			fmt.Println("i =", i)
-			//if i == 5 {
-			//	ticker.Stop()
-			//}
-		}
-	}()
 }
 
 func initConfig() {
@@ -89,28 +125,4 @@ func initConfig() {
 		}
 		log.Fatal(err) // 读取配置文件失败致命错误
 	}
-}
-
-func initLog() {
-	log.SetFormatter(&log.JSONFormatter{TimestampFormat: "2006-01-02 15:04:05"})
-
-	path := "./logs/"
-	/* 日志轮转相关函数
-	`WithLinkName` 为最新的日志建立软连接
-	`WithRotationTime` 设置日志分割的时间，隔多久分割一次
-	WithMaxAge 和 WithRotationCount二者只能设置一个
-	  `WithMaxAge 设置文件清理前的最长保存时间`
-	  `WithRotationCount` 设置文件清理前最多保存的个数
-	*/
-	// 下面配置日志每隔 1天 转一个新文件，保留最近 1周 的日志文件，多余的自动清理掉。
-	LinkName := path + "shuax-chrome-auto-update.log"
-
-	writer, _ := rotatelogs.New(
-		//path+".%Y%m%d%H%M",
-		path+"go-crontab-%Y-%m-%d.log",
-		rotatelogs.WithLinkName(LinkName),
-		rotatelogs.WithMaxAge(time.Duration(604800)*time.Second),
-		rotatelogs.WithRotationTime(time.Duration(86400)*time.Second),
-	)
-	log.SetOutput(writer)
 }

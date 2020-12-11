@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/gocolly/colly"
-	log "github.com/sirupsen/logrus"
+	"log"
 	"io/ioutil"
 	"net/http"
 	"strings"
