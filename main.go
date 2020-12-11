@@ -3,17 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gocolly/colly"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	_log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"log"
-	"net/http"
+	"shuax-chrome-auto-update/service"
 	"time"
 )
-
-const AutoState = "true"
-const ShuaxHost = "https://assets.shuax.com"
 
 // 1、爬取 https://assets.shuax.com/ 的页面 获取最新版的chrome版本
 //2、与本地chrome当前版本比较，大于当前版本则下载到本地、解压(询问提示)
@@ -21,83 +16,48 @@ const ShuaxHost = "https://assets.shuax.com"
 //4、删除下载的文件
 
 type Config struct {
-	AutoDownload string `json:"auto_download"`
-	AutoUpdate string `json:"auto_update"`
+	AutoDownload       string `json:"auto_download"`
+	AutoUpdate         string `json:"auto_update"`
 	DeleteDownloadFile string `json:"delete_download_file"`
-	IntervalMin string `json:"interval_min"`
-	LocalChromePath string `json:"local_chrome_path"`
+	IntervalMin        string `json:"interval_min"`
+	LocalChromePath    string `json:"local_chrome_path"`
 }
 
 var _config Config
 
-func init()  {
+func init() {
 	initConfig()
 	initLog()
 }
 
-func main()  {
+func main() {
 	configStr := viper.Get(`app`)
-
 	jsonStr, e := json.Marshal(configStr)
-
 	if e != nil {
-		_log.Error("json Marshal error  ", e)
+		log.Error("json Marshal error  ", e)
 	}
-
 	json.Unmarshal(jsonStr, &_config)
 
-	name := getLatestVersionName(_config)
 
-	log.Println("name",name)
+
+	f := &service.FileInfo{
+		FileDir: _config.LocalChromePath + "\\App\\",
+	}
+	localVersionName := service.GetLocalVersionName(f)
+
+	chromeFileName,latestVersionName := service.GetLatestVersionName(_config.AutoDownload)
+
+	fmt.Println("1111111",chromeFileName, latestVersionName, localVersionName)
+
+	service.DownloadChrome("87.0.4280.89",localVersionName,chromeFileName)
 
 	tickerRun()
 
-	for {}
-}
-
-func getLatestVersionName(_config Config) string {
-	versionName := ""
-
-	if AutoState == _config.AutoDownload{
-		c := colly.NewCollector(
-			colly.Async(true),
-		)
-
-		c.WithTransport(&http.Transport{
-			DisableKeepAlives: true,
-		})
-
-		c.OnRequest(func(r *colly.Request) {
-			_log.Println("Visiting", r.URL)
-		})
-
-		retryCount := 0
-		c.OnError(func(res *colly.Response, err error) {
-			_log.Println("Something went wrong:", err)
-			if retryCount < 3 {
-				retryCount += 1
-				_retryErr := res.Request.Retry()
-				_log.Println("retry wrong:", _retryErr)
-			}
-		})
-
-
-		c.OnHTML(".fb-n", func(e *colly.HTMLElement) {
-			if e.Index == 2 {
-				versionName = e.Text
-			}
-		})
-
-		visitError := c.Visit(ShuaxHost)
-
-		_log.Println(visitError)
-
-		c.Wait()
+	for {
 	}
-	return versionName
 }
 
-func tickerRun()  {
+func tickerRun() {
 
 	ticker := time.NewTicker(time.Minute * 1)
 
@@ -132,7 +92,7 @@ func initConfig() {
 }
 
 func initLog() {
-	_log.SetFormatter(&_log.JSONFormatter{TimestampFormat: "2006-01-02 15:04:05"})
+	log.SetFormatter(&log.JSONFormatter{TimestampFormat: "2006-01-02 15:04:05"})
 
 	path := "./logs/"
 	/* 日志轮转相关函数
@@ -152,5 +112,5 @@ func initLog() {
 		rotatelogs.WithMaxAge(time.Duration(604800)*time.Second),
 		rotatelogs.WithRotationTime(time.Duration(86400)*time.Second),
 	)
-	_log.SetOutput(writer)
+	log.SetOutput(writer)
 }

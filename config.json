@@ -6,7 +6,7 @@
   },
   "app": {
     "interval_min": "1",
-    "local_chrome_path": "sdfsdf",
+    "local_chrome_path": "F:\\shuax_chrome_copy",
     "auto_download": "true",
     "auto_update": "true",
     "delete_download_file": "true"
