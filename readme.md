@@ -11,6 +11,9 @@
 - windows下 配合.bat文件 实现开机自动检测更新功能
 
 ### 流程
+![free-pic](https://vkceyugu.cdn.bspapp.com/VKCEYUGU-imgbed/b996a298-aa5f-4a27-a680-d7f2f7dde620.png
+)
+
 
 ### 使用
 自定义config.json配置文件(shuax chrome 的安装目录)
@@ -60,6 +63,6 @@ go build
 
 windows 开机自动检测(创建.bat文件)
 
-./shuax-chrome-upgrade.bat
+[./shuax-chrome-upgrade.bat](./shuax-chrome-upgrade.bat)
 
 创建快捷方式，设定开机自启即可

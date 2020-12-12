@@ -38,7 +38,8 @@ func main() {
 	}
 	json.Unmarshal(jsonStr, &_config)
 
-	fmt.Printf("欢迎使用shuax_chrome_update工具\n\n")
+	fmt.Printf("欢迎使用 shuax-chrome-upgrade 工具\n\n")
+	fmt.Printf("github：https://github.com/hezhizheng/shuax-chrome-upgrade\n\n")
 	fmt.Printf("当前定义的本地chrome的安装路径为：" + _config.LocalChromePath + "\n\n")
 	fmt.Printf("请根据提示输入相关指令进行操作\n\n")
 	fmt.Printf("检查更新中......\n\n")
