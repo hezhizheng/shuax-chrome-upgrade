@@ -25,19 +25,23 @@ func init() {
 }
 
 func main() {
+
 	var _config Config
+	var (
+		exit string
+	)
 
 	configStr := viper.Get(`app`)
 	jsonStr, e := json.Marshal(configStr)
 	if e != nil {
-		log.Fatal("配置文件加载有误，请检查！",e)
+		log.Fatal("配置文件加载有误，请检查！", e)
 	}
 	json.Unmarshal(jsonStr, &_config)
 
-	fmt.Printf("欢迎使用shuax_chrome_update工具\n")
-	fmt.Printf("当前定义的本地chrome的安装路径为：" + _config.LocalChromePath + "\n")
-	fmt.Printf("请根据提示输入相关指令进行操作\n")
-	fmt.Printf("检查更新中......\n")
+	fmt.Printf("欢迎使用shuax_chrome_update工具\n\n")
+	fmt.Printf("当前定义的本地chrome的安装路径为：" + _config.LocalChromePath + "\n\n")
+	fmt.Printf("请根据提示输入相关指令进行操作\n\n")
+	fmt.Printf("检查更新中......\n\n")
 
 	// 获取本地chrome版本
 	f := &service.FileInfo{
@@ -53,6 +57,8 @@ func main() {
 		fmt.Printf("提示：升级前请确保浏览器已处于退出状态！！！\n")
 	} else {
 		fmt.Printf("当前本地chrome的版本为：" + localVersionName + "，" + "最新chrome版本为：" + latestVersionName + " 无需升级\n")
+		fmt.Printf("输入任意键退出\n")
+		fmt.Scanln(&exit)
 		return
 	}
 
@@ -82,6 +88,9 @@ func main() {
 		fmt.Printf("删除完成......\n")
 		break
 	}
+
+	fmt.Printf("输入任意键退出\n")
+	fmt.Scanln(&exit)
 	return
 }
 
