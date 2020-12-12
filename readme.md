@@ -36,13 +36,13 @@
 }
 ```
 
-编译 (windows提供编译好的文件 shuax-chrome-upgrade.7z
+编译 (提供编译好的文件 shuax-chrome-upgrade.7z
 下载 [releases](https://github.com/hezhizheng/shuax-chrome-upgrade/releases) )
 
 ![free-pic](https://vkceyugu.cdn.bspapp.com/VKCEYUGU-imgbed/58d3ddf7-5060-457d-a996-f9fa5a4cefd5.png
 )
 
-自动编译
+手动编译
 ```
 go build
 ```
