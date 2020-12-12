@@ -5,26 +5,20 @@ import (
 	"github.com/spf13/viper"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
-	"strconv"
-	"strings"
+	"shuax-chrome-upgrade/service/helper"
 )
 
 func DownloadChrome(latestVersionName, localVersionName, chromeFileName string) {
 
-	//AutoUpdate := viper.Get(`app.auto_update`)
-
 	needDownload := false
 
 	if latestVersionName != "" && localVersionName != "" {
-
-		if CompareVersion(latestVersionName, localVersionName) == 1 {
+		if helper.CompareVersion(latestVersionName, localVersionName) == 1 {
 			needDownload = true
 		}
-
 	} else {
 		panic("版本异常！")
 	}
@@ -43,7 +37,7 @@ func DownloadChrome(latestVersionName, localVersionName, chromeFileName string) 
 			panic(err)
 		}
 
-		fmt.Println("下载完成........")
+		fmt.Println("下载完成。")
 	}
 
 	if fileExists(filename) {
@@ -52,16 +46,15 @@ func DownloadChrome(latestVersionName, localVersionName, chromeFileName string) 
 		os.RemoveAll(path.(string) + "\\" + "App2")
 		os.RemoveAll(path.(string) + "\\" + "chrome")
 
-		fmt.Println("解压文件........")
+		fmt.Println("解压文件中........")
 
 		_, e1 := exec.Command("./7z.exe", "x", filename, "-o"+path.(string)).Output()
-
 		if e1 != nil {
 			fmt.Println("解压文件失败")
 			panic(e1)
 		}
 
-		fmt.Println("解压完成")
+		fmt.Println("解压完成。")
 
 		renameErr := os.Rename(path.(string)+"\\"+"App", path.(string)+"\\"+"App2")
 
@@ -82,6 +75,13 @@ func DownloadChrome(latestVersionName, localVersionName, chromeFileName string) 
 
 	panic("升级失败")
 
+}
+
+func DeleteDownloadFile(chromeFileName string) {
+	localChromePath := viper.Get(`app.local_chrome_path`).(string)
+	// os.RemoveAll(localChromePath + "\\" + "App2")
+	os.RemoveAll(localChromePath + "\\" + "chrome")
+	os.RemoveAll(localChromePath + "\\" + chromeFileName)
 }
 
 func fileForCopyDir(src, dst string) error {
@@ -151,52 +151,4 @@ func fileExists(path string) bool {
 		return false
 	}
 	return true
-}
-
-func DownloadFile(filepath string, url string) error {
-
-	// https://studygolang.com/articles/26441 进度条
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
-
-	return err
-}
-
-// https://leetcode-cn.com/problems/compare-version-numbers/solution/golangshi-xian-by-he-qing-ping/
-func CompareVersion(version1 string, version2 string) int {
-	versionA := strings.Split(version1, ".")
-	versionB := strings.Split(version2, ".")
-
-	for i := len(versionA); i < 4; i++ {
-		versionA = append(versionA, "0")
-	}
-	for i := len(versionB); i < 4; i++ {
-		versionB = append(versionB, "0")
-	}
-	for i := 0; i < 4; i++ {
-		version1, _ := strconv.Atoi(versionA[i])
-		version2, _ := strconv.Atoi(versionB[i])
-		if version1 == version2 {
-			continue
-		} else if version1 > version2 {
-			return 1
-		} else {
-			return -1
-		}
-	}
-	return 0
 }

@@ -7,7 +7,8 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
-	"shuax-chrome-auto-update/service"
+	"shuax-chrome-upgrade/service"
+	"shuax-chrome-upgrade/service/helper"
 )
 
 // 1、爬取 https://assets.shuax.com/ 的页面 获取最新版的chrome版本
@@ -16,98 +17,72 @@ import (
 //4、删除下载的文件
 
 type Config struct {
-	AutoDownload       string `json:"auto_download"`
-	AutoUpdate         string `json:"auto_update"`
-	DeleteDownloadFile string `json:"delete_download_file"`
-	IntervalMin        string `json:"interval_min"`
-	LocalChromePath    string `json:"local_chrome_path"`
+	LocalChromePath string `json:"local_chrome_path"`
 }
-
-var _config Config
 
 func init() {
 	initConfig()
 }
 
 func main() {
+	var _config Config
+
 	configStr := viper.Get(`app`)
 	jsonStr, e := json.Marshal(configStr)
 	if e != nil {
-		log.Fatal("json Marshal error  ", e)
+		log.Fatal("配置文件加载有误，请检查！",e)
 	}
 	json.Unmarshal(jsonStr, &_config)
 
 	fmt.Printf("欢迎使用shuax_chrome_update工具\n")
 	fmt.Printf("当前定义的本地chrome的安装路径为：" + _config.LocalChromePath + "\n")
 	fmt.Printf("请根据提示输入相关指令进行操作\n")
-	fmt.Printf("是否检查更新？1：是 2：否\n")
+	fmt.Printf("检查更新中......\n")
 
-	input := bufio.NewScanner(os.Stdin)
-
-	for input.Scan() {
-		line := input.Text()
-
-		fmt.Printf("输入了：" + line + "\n")
-
-		if line == "1" {
-
-			f := &service.FileInfo{
-				FileDir: _config.LocalChromePath + "\\App\\",
-			}
-			localVersionName := service.GetLocalVersionName(f)
-
-			chromeFileName, latestVersionName := service.GetLatestVersionName(_config.AutoDownload)
-
-			if service.CompareVersion(latestVersionName, localVersionName) == 1 {
-				fmt.Printf("当前本地chrome的版本为：" + localVersionName + "，" + "最新chrome版本为：" + latestVersionName + " 是否进行升级？1：是 2：否\n")
-			} else {
-				fmt.Printf("当前本地chrome的版本为：" + localVersionName + "，" + "最新chrome版本为：" + latestVersionName + " 无需升级\n")
-				break
-			}
-			var (
-				isUpdate string
-				isDelete string
-			)
-			fmt.Scanln(&isUpdate)
-			fmt.Printf("输入了：" + isUpdate + "\n")
-
-			if isUpdate != "1" {
-				break
-			}
-			fmt.Printf("升级中，请等待，此过程中请不要做任何输入。\n")
-			service.DownloadChrome(latestVersionName, localVersionName, chromeFileName)
-
-			fmt.Printf("升级成功，是否删除下载/解压的文件？（建议先检查是否升级成功在执行此操作！！！）1：是 2：否\n")
-			fmt.Scanln(&isDelete)
-			fmt.Printf("输入了：" + isDelete + "\n")
-			if isDelete != "1" {
-				break
-			}
-			fmt.Printf("文件删除中......\n")
-			break
-
-		} else {
-			break
-		}
-
-		// 输入bye时 结束
-		if line == "exit" {
-			break
-		}
-	}
-
-	return
+	// 获取本地chrome版本
 	f := &service.FileInfo{
 		FileDir: _config.LocalChromePath + "\\App\\",
 	}
 	localVersionName := service.GetLocalVersionName(f)
 
-	chromeFileName, latestVersionName := service.GetLatestVersionName(_config.AutoDownload)
+	//获取shuax最新chrome版本
+	chromeFileName, latestVersionName := service.GetLatestVersionName()
+	// 比较版本号
+	if helper.CompareVersion(latestVersionName, localVersionName) == 1 {
+		fmt.Printf("当前本地chrome的版本为：" + localVersionName + "，" + "最新chrome版本为：" + latestVersionName + " 是否进行升级？1：是 2：否\n")
+		fmt.Printf("提示：升级前请确保浏览器已处于退出状态！！！\n")
+	} else {
+		fmt.Printf("当前本地chrome的版本为：" + localVersionName + "，" + "最新chrome版本为：" + latestVersionName + " 无需升级\n")
+		return
+	}
 
-	fmt.Println("1111111", chromeFileName, latestVersionName, localVersionName)
+	input := bufio.NewScanner(os.Stdin)
 
-	service.DownloadChrome(latestVersionName, localVersionName, chromeFileName)
+	for input.Scan() {
+		line := input.Text()
+		fmt.Printf("输入了：" + line + "\n")
+		if line != "1" {
+			break
+		}
 
+		fmt.Printf("升级中，请等待，此过程中请不要做任何输入。\n")
+		service.DownloadChrome(latestVersionName, localVersionName, chromeFileName)
+		fmt.Printf("升级成功，是否删除下载/解压的文件？（建议先检查是否升级成功在执行此操作！！！）1：是 2：否\n")
+
+		var (
+			isDelete string
+		)
+		fmt.Scanln(&isDelete)
+		fmt.Printf("输入了：" + isDelete + "\n")
+		if isDelete != "1" {
+			break
+		}
+		fmt.Printf("文件删除中......\n")
+		service.DeleteDownloadFile(chromeFileName)
+		fmt.Printf("删除完成......\n")
+		break
+	}
+	return
 }
 
 func initConfig() {

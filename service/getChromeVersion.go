@@ -2,13 +2,12 @@ package service
 
 import (
 	"github.com/gocolly/colly"
-	"log"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
 
-const AutoState = "true"
 const ShuaxHost = "https://assets.shuax.com"
 
 type FileInfo struct {
@@ -36,52 +35,52 @@ func GetLocalVersionName(f *FileInfo) string {
 	return f.Version
 }
 
-func GetLatestVersionName(AutoDownload string) (string,string) {
+func GetLatestVersionName() (string, string) {
 	fileName := ""
 
-	if AutoState == AutoDownload {
-		c := colly.NewCollector(
-			colly.Async(true),
-		)
+	c := colly.NewCollector(
+		colly.Async(true),
+	)
 
-		c.WithTransport(&http.Transport{
-			DisableKeepAlives: true,
-		})
+	c.WithTransport(&http.Transport{
+		DisableKeepAlives: true,
+	})
 
-		c.OnRequest(func(r *colly.Request) {
-			log.Println("Visiting", r.URL)
-		})
+	c.OnRequest(func(r *colly.Request) {
+		log.Println("请求", r.URL, "...")
+	})
 
-		retryCount := 0
-		c.OnError(func(res *colly.Response, err error) {
-			log.Println("Something went wrong:", err)
-			if retryCount < 3 {
-				retryCount += 1
-				_retryErr := res.Request.Retry()
-				log.Println("retry wrong:", _retryErr)
-			}
-		})
+	retryCount := 0
+	c.OnError(func(res *colly.Response, err error) {
+		log.Println("Something went wrong:", err)
+		if retryCount < 3 {
+			retryCount += 1
+			_retryErr := res.Request.Retry()
+			log.Println("retry wrong:", _retryErr)
+		}
+	})
 
-		c.OnHTML(".fb-n", func(e *colly.HTMLElement) {
-			if e.Index == 2 {
-				fileName = e.Text
-			}
-		})
+	c.OnHTML(".fb-n", func(e *colly.HTMLElement) {
+		if e.Index == 2 {
+			fileName = e.Text
+		}
+	})
 
-		visitError := c.Visit(ShuaxHost)
+	visitError := c.Visit(ShuaxHost)
 
-		log.Println(visitError)
-
-		c.Wait()
+	if visitError != nil {
+		log.Println("访问" + ShuaxHost + "失败")
+		panic(visitError)
 	}
+	c.Wait()
 
 	version := ""
 
 	// GoogleChrome_X64_87.0.4280.88_shuax.com.7z
-	if fileName != ""{
+	if fileName != "" {
 		FStrSplit := strings.Split(fileName, "_X64_")[1]
 		version = strings.Split(FStrSplit, "_shuax")[0]
 	}
 
-	return fileName , version
+	return fileName, version
 }
