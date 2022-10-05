@@ -42,7 +42,7 @@
 
 手动编译
 ```
-go build
+go build -ldflags "-s -w" -gcflags="all=-trimpath=${PWD}" -asmflags="all=-trimpath=${PWD}"
 ```
 
 运行
