@@ -18,6 +18,7 @@
 自定义config.json配置文件(shuax chrome 的安装目录)
 
 例：假如我的shuax chrome 安装解压目录为
+
 ![free-pic](./images/2.png)
 
 那么 local_chrome_path 就定义为 `D:\d\shuax_chrome\Chrome`。如下：
