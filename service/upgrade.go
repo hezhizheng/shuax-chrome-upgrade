@@ -23,7 +23,7 @@ func DownloadChrome(latestVersionName, localVersionName, chromeFileName string) 
 		panic("版本异常！")
 	}
 
-	url := ShuaxHost + "/" + chromeFileName
+	url := ShuaxHost + "/download/" + chromeFileName
 	path := viper.Get(`app.local_chrome_path`)
 
 	filename := path.(string) + "\\" + chromeFileName

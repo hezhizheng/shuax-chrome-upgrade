@@ -1,8 +1,11 @@
 {
   "comments": {
-    "comment1": "// 这些是注释不用理会，local_chrome_path：本地chrome安装路径"
+    "comment1": "// 这些是注释不用理会，local_chrome_path：本地chrome安装路径",
+    "comment2": "// proxy_url： 下载代理，检查最新版本跟下载可能需要翻墙，如程序有错误抛出，请尝试使用代理解决(不使用代理则无需配置该项，或者设置为空字符串)。",
+    "comment3": "http://127.0.0.1:7890"
   },
   "app": {
-    "local_chrome_path": "E:\\chrome"
+    "local_chrome_path": "D:\\d\\shuax_chrome\\Chrome"
+    ,"proxy_url": ""
   }
 }

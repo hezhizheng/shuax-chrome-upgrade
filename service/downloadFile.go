@@ -3,11 +3,15 @@ package service
 import (
 	"fmt"
 	"github.com/dustin/go-humanize"
+	"github.com/spf13/viper"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
+
+const httpProxyUrl = "http://127.0.0.1:7890"
 
 // @link https://studygolang.com/articles/26441
 type writeCounter struct {
@@ -26,12 +30,27 @@ func (wc writeCounter) PrintProgress() {
 	fmt.Printf("\rDownloading... %s complete", humanize.Bytes(wc.Total))
 }
 
-func DownloadFile(filepath string, url string) error {
+func DownloadFile(filepath string, furl string) error {
 	out, err := os.Create(filepath + ".tmp")
 	if err != nil {
 		return err
 	}
-	resp, err := http.Get(url)
+
+	proxyUrl := viper.GetString(`app.proxy_url`)
+
+	var httpclient = http.Client{}
+
+	if proxyUrl != "" {
+		ProxyURL, _ := url.Parse(httpProxyUrl)
+		httpclient = http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(ProxyURL),
+			},
+		}
+	}
+
+	resp, err := httpclient.Get(furl)
+	//resp, err := http.Get(furl)
 	if err != nil {
 		out.Close()
 		return err
